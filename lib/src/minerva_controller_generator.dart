@@ -9,7 +9,8 @@ import 'package:minerva_controller_annotation/minerva_controller_annotation.dart
 import 'package:source_gen/source_gen.dart';
 
 part 'api_builder/api_source_builder.dart';
-part 'api_generator.dart';
+part 'api_generator/api_generator.dart';
+part 'api_generator/action_path_build_data.dart';
 part 'api_builder/data/api_data.dart';
 part 'api_builder/data/action_annotation_data.dart';
 part 'api_builder/data/action_data.dart';
