@@ -5,10 +5,13 @@ class ActionData {
 
   final String path;
 
+  final List<ParameterElement> parameters;
+
   final ActionAnnotationData annotationData;
 
   ActionData(
       {required this.methodName,
       required this.path,
+      required this.parameters,
       required this.annotationData});
 }

@@ -33,8 +33,38 @@ class ${data.shortName}Api extends Api {
       final data = action.annotationData;
 
       result +=
-          'endpoints.${data.method.name}(\'${action.path}\', (context, request) => (_controller as $name).${action.methodName}(context, request), errorHandler: ${_buildErrorHandler(data.errorHandler)}, authOptions: ${_buildAuthOptions(data.authOptions)}, filter: ${_buildFilter(data.filter)}); \n';
+          'endpoints.${data.method.name}(\'${action.path}\', ${_buildCallActionHandler(name, action)}, errorHandler: ${_buildErrorHandler(data.errorHandler)}, authOptions: ${_buildAuthOptions(data.authOptions)}, filter: ${_buildFilter(data.filter)}); \n';
     }
+
+    return result;
+  }
+
+  String _buildCallActionHandler(String name, ActionData data) {
+    return '(context, request) { ${_buildSourceBindings(data.parameters)} return (_controller as $name).${data.methodName}${_buildCallActionParameters(data.parameters)}; }';
+  }
+
+  String _buildSourceBindings(List<ParameterElement> parameters) {
+    return '';
+  }
+
+  String _buildCallActionParameters(List<ParameterElement> parameters) {
+    var result = '(';
+
+    for (var i = 0; i < parameters.length; i++) {
+      if (contextChecker.isExactlyType(parameters[i].type)) {
+        result += 'context';
+      } else if (requestChecker.isExactlyType(parameters[i].type)) {
+        result += 'request';
+      } else {
+        throw InvalidGenerationSourceError('');
+      }
+
+      if (i < parameters.length - 1) {
+        result += ', ';
+      }
+    }
+
+    result += ')';
 
     return result;
   }

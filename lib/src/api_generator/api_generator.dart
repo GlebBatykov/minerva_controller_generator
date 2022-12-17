@@ -58,6 +58,7 @@ class ApiFromControlllerGenerator extends Generator {
       final controllerPath = _getControllerPath(controller, shortName);
 
       final actionPath = _getActionPath(ActionPathBuildData(
+          method: annotationData.method,
           template: annotationData.template,
           actionName: methodName,
           controllerPath: controllerPath,
@@ -66,6 +67,7 @@ class ApiFromControlllerGenerator extends Generator {
       actions.add(ActionData(
           methodName: methodName,
           path: actionPath,
+          parameters: element.parameters,
           annotationData: annotationData));
     }
 
@@ -88,16 +90,7 @@ class ApiFromControlllerGenerator extends Generator {
       throw InvalidGenerationSourceError('');
     }
 
-    if (element.parameters.length != 2) {
-      throw InvalidGenerationSourceError('');
-    }
-
-    if (contextChecker.isExactlyType(element.parameters[0].type) &&
-        requestChecker.isExactlyType(element.parameters[1].type)) {
-      return true;
-    } else {
-      throw InvalidGenerationSourceError('');
-    }
+    return true;
   }
 
   String _getControllerPath(ClassElement controller, String shortName) {
@@ -128,17 +121,13 @@ class ApiFromControlllerGenerator extends Generator {
   String _getActionPath(ActionPathBuildData data) {
     var actionName = data.actionName.toLowerCase();
 
-    final httpMethodsNames = ActionHttpMethod.values.map((e) => e.name);
-
-    if (httpMethodsNames.contains(actionName)) {
+    if (ActionHttpMethod.values.map((e) => e.name).contains(actionName)) {
       return data.controllerPath;
     }
 
-    for (final name in httpMethodsNames) {
-      if (actionName.endsWith(name)) {
-        actionName = actionName.substring(0, actionName.length - name.length);
-        break;
-      }
+    if (actionName.endsWith(data.method.name)) {
+      actionName =
+          actionName.substring(0, actionName.length - data.method.name.length);
     }
 
     if (data.template == '/{action}' &&

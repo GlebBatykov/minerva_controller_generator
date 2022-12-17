@@ -29,3 +29,14 @@ const cookieAuthOptionsChecker = TypeChecker.fromRuntime(CookieAuthOptions);
 const jsonFilterChecker = TypeChecker.fromRuntime(JsonFilter);
 
 const formFilterChecker = TypeChecker.fromRuntime(FormFilter);
+
+const bindingSourceAnnotationChecker =
+    TypeChecker.fromRuntime(BindingSourceAnnotation);
+
+const fromBodyChecker = TypeChecker.fromRuntime(FromBody);
+
+const fromFormChecker = TypeChecker.fromRuntime(FromForm);
+
+const fromRouteChecker = TypeChecker.fromRuntime(FromRoute);
+
+const fromQueryChecker = TypeChecker.fromRuntime(FromQuery);
