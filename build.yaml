@@ -1,0 +1,16 @@
+targets:
+  $default:
+    builders:
+      minerva_controller_generator|api_from_controller_builder:
+        enabled: true
+        generate_for:
+          - lib/*
+
+builders:
+  api_from_controller_builder:
+    import: "package:minerva_controller_generator/builder.dart"
+    builder_factories: ["apiFromControllerBuilder"]
+    auto_apply: dependents
+    build_to: cache
+    build_extensions: { ".dart": [".api.part"] }
+    applies_builders: ["source_gen|combining_builder"]

@@ -1,0 +1,31 @@
+part of minerva_controller_generator;
+
+const controllerChecker = TypeChecker.fromRuntime(ControllerBase);
+
+const controllerAnnotationChecker = TypeChecker.fromRuntime(Controller);
+
+const actionChecker = TypeChecker.fromRuntime(ActionAnnotation);
+
+const Map<TypeChecker, ActionHttpMethod> httpMethodsTypeCheckers = {
+  TypeChecker.fromRuntime(Get): ActionHttpMethod.get,
+  TypeChecker.fromRuntime(Post): ActionHttpMethod.post,
+  TypeChecker.fromRuntime(Head): ActionHttpMethod.head,
+  TypeChecker.fromRuntime(Options): ActionHttpMethod.options,
+  TypeChecker.fromRuntime(Patch): ActionHttpMethod.patch,
+  TypeChecker.fromRuntime(Put): ActionHttpMethod.put,
+  TypeChecker.fromRuntime(Trace): ActionHttpMethod.trace
+};
+
+const contextChecker = TypeChecker.fromRuntime(ServerContext);
+
+const requestChecker = TypeChecker.fromRuntime(MinervaRequest);
+
+const authOptionsChecher = TypeChecker.fromRuntime(AuthOptions);
+
+const jwtAuthOptionsChecker = TypeChecker.fromRuntime(JwtAuthOptions);
+
+const cookieAuthOptionsChecker = TypeChecker.fromRuntime(CookieAuthOptions);
+
+const jsonFilterChecker = TypeChecker.fromRuntime(JsonFilter);
+
+const formFilterChecker = TypeChecker.fromRuntime(FormFilter);
