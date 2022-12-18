@@ -2,6 +2,8 @@ library minerva_controller_generator;
 
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:minerva/minerva.dart';
 import 'package:minerva_controller/minerva_controller.dart';
@@ -16,4 +18,5 @@ part 'api_builder/data/action_annotation_data.dart';
 part 'api_builder/data/action_data.dart';
 part 'api_builder/data/action_http_method.dart';
 part 'extension/element_extension.dart';
+part 'extension/dart_type_extension.dart';
 part 'constants.dart';

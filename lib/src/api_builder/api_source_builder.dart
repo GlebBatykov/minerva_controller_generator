@@ -1,5 +1,13 @@
 part of minerva_controller_generator;
 
+class CallActionData {
+  final String sourceBindings;
+
+  final String parameters;
+
+  CallActionData(this.sourceBindings, this.parameters);
+}
+
 class ApiSourceBuilder {
   const ApiSourceBuilder();
 
@@ -40,33 +48,230 @@ class ${data.shortName}Api extends Api {
   }
 
   String _buildCallActionHandler(String name, ActionData data) {
-    return '(context, request) { ${_buildSourceBindings(data.parameters)} return (_controller as $name).${data.methodName}${_buildCallActionParameters(data.parameters)}; }';
+    final callActionData = _getCallActionData(data.parameters);
+
+    return '(context, request) async { ${callActionData.sourceBindings} return (_controller as $name).${data.methodName}${callActionData.parameters}; }';
   }
 
-  String _buildSourceBindings(List<ParameterElement> parameters) {
-    return '';
-  }
+  CallActionData _getCallActionData(List<ParameterElement> elements) {
+    final parameters = <String>[];
 
-  String _buildCallActionParameters(List<ParameterElement> parameters) {
-    var result = '(';
+    final bindingSources = <String>[];
 
-    for (var i = 0; i < parameters.length; i++) {
-      if (contextChecker.isExactlyType(parameters[i].type)) {
-        result += 'context';
-      } else if (requestChecker.isExactlyType(parameters[i].type)) {
-        result += 'request';
+    for (var i = 0; i < elements.length; i++) {
+      if (contextChecker.isExactlyType(elements[i].type)) {
+        parameters.add('context');
+      } else if (requestChecker.isExactlyType(elements[i].type)) {
+        parameters.add('request');
       } else {
-        throw InvalidGenerationSourceError('');
-      }
+        if (fromQueryChecker.hasAnnotationOfExact(elements[i])) {
+          bindingSources.add(_buildFromQuerySource(i, elements[i]));
 
-      if (i < parameters.length - 1) {
-        result += ', ';
+          parameters.add('parameter$i');
+        } else if (fromRouteChecker.hasAnnotationOfExact(elements[i])) {
+          bindingSources.add(_buildFromRouteSource(i, elements[i]));
+
+          parameters.add('parameter$i');
+        } else if (fromBodyChecker.hasAnnotationOfExact(elements[i])) {
+          bindingSources.add(_buildFromBodySource(i, elements[i]));
+
+          parameters.add('parameter$i');
+        } else if (fromFormChecker.hasAnnotationOfExact(elements[i])) {
+          bindingSources.add(_buildFromFormSource(i, elements[i]));
+
+          parameters.add('parameter$i');
+        } else {
+          throw InvalidGenerationSourceError('');
+        }
       }
     }
 
-    result += ')';
+    var parametersString = '(';
 
-    return result;
+    for (var i = 0; i < parameters.length; i++) {
+      parametersString += parameters[i];
+
+      if (i < parameters.length - 1) {
+        parametersString += ', ';
+      }
+    }
+
+    parametersString += ')';
+
+    return CallActionData(bindingSources.join('\n'), parametersString);
+  }
+
+  String _buildFromQuerySource(int index, ParameterElement element) {
+    return 'final parameter$index = ${_buildStringToTypeConverter('request.uri.queryParameters[\'${element.name}\']', element.type)};';
+  }
+
+  String _buildStringToTypeConverter(String value, DartType type) {
+    if (type.isDartCoreString) {
+      if (type.isNotNullable) {
+        return '$value!';
+      } else {
+        return value;
+      }
+    } else if (type.isDartCoreBool) {
+      if (type.isNullable) {
+        return '$value != null ? $value! == \'true\' : null';
+      } else {
+        return '$value! == \'true\'';
+      }
+    } else if (type.isDartCoreInt) {
+      if (type.isNullable) {
+        return '$value != null ? int.parse($value!) : null';
+      } else {
+        return 'int.parse($value!)';
+      }
+    } else if (type.isDartCoreDouble) {
+      if (type.isNullable) {
+        return '$value != null ? double.parse($value!) : null';
+      } else {
+        return 'double.parse($value!)';
+      }
+    } else if (type.isDartCoreNum) {
+      if (type.isNullable) {
+        return '$value != null ? num.parse($value!) : null';
+      } else {
+        return 'num.parse($value!)';
+      }
+    } else {
+      if (type.isNullable) {
+        return '$value != null ? ${type.getDisplayString(withNullability: false)}.fromJson(jsonDecode($value!)) : null';
+      } else {
+        return '${type.getDisplayString(withNullability: false)}.fromJson(jsonDecode($value!))';
+      }
+    }
+  }
+
+  String _buildFromRouteSource(int index, ParameterElement element) {
+    return 'final parameter$index = ${_buildNumToTypeConverter('request.pathParameters[\'${element.name}\']', element.type)};';
+  }
+
+  String _buildNumToTypeConverter(String value, DartType type) {
+    if (type.isDartCoreNum) {
+      if (type.isNullable) {
+        return '$value != null ? $value : null';
+      } else {
+        return '$value!';
+      }
+    } else if (type.isDartCoreInt) {
+      if (type.isNullable) {
+        return '$value != null ? $value!.toInt() : null';
+      } else {
+        return '$value!.toInt()';
+      }
+    } else if (type.isDartCoreDouble) {
+      if (type.isNullable) {
+        return '$value != null ? $value!.toDouble() : null';
+      } else {
+        return '$value!.toDouble()';
+      }
+    } else if (type.isDartCoreBool) {
+      if (type.isNullable) {
+        return '$value != null ? $value > 0 : null';
+      } else {
+        return '$value > 0';
+      }
+    } else if (type.isDartCoreString) {
+      if (type.isNullable) {
+        return '$value != null ? $value!.toString() : null';
+      } else {
+        return '$value!.toString()';
+      }
+    } else {
+      throw InvalidGenerationSourceError('');
+    }
+  }
+
+  String _buildFromBodySource(int index, ParameterElement element) {
+    return 'final parameter$index = ${_buildJsonValueToTypeConverter('(await request.body.asJson())[\'${element.name}\']', element.type)};';
+  }
+
+  String _buildJsonValueToTypeConverter(String value, DartType type) {
+    if (type.isDartCoreString) {
+      final converter = '$value as String';
+
+      if (type.isNullable) {
+        return '$value != null ? $converter : null';
+      } else {
+        return converter;
+      }
+    } else if (type.isDartCoreInt) {
+      final converter = '$value as int';
+
+      if (type.isNullable) {
+        return '$value != null ? $converter : null';
+      } else {
+        return converter;
+      }
+    } else if (type.isDartCoreDouble) {
+      final converter = '$value as double';
+
+      if (type.isNullable) {
+        return '$value != null ? $converter : null';
+      } else {
+        return converter;
+      }
+    } else if (type.isDartCoreNum) {
+      final converter = '$value as num';
+
+      if (type.isNullable) {
+        return '$value != null ? $converter : null';
+      } else {
+        return converter;
+      }
+    } else if (type.isDartCoreList) {
+      return _buildJsonListToTypeConverter(value, type);
+    } else if (type.isDartCoreMap) {
+      return _buildJsonMapToTypeConverter(value, type);
+    } else {
+      final converter =
+          '${type.getDisplayString(withNullability: false)}.fromJson(jsonDecode($value!))';
+
+      if (type.isNullable) {
+        return '$value != null ? $converter : null';
+      } else {
+        return converter;
+      }
+    }
+  }
+
+  String _buildJsonMapToTypeConverter(String value, DartType type) {
+    final firstGenericType = (type as ParameterizedType).typeArguments[0];
+
+    final secondGenericType = type.typeArguments[1];
+
+    value = '($value as Map)';
+
+    final converter =
+        '$value.map<${firstGenericType.getDisplayString(withNullability: true)}, ${secondGenericType.getDisplayString(withNullability: true)}>((key, value) => MapEntry(${_buildJsonValueToTypeConverter('key', firstGenericType)}, ${_buildJsonValueToTypeConverter('value', secondGenericType)}))';
+
+    if (type.isNullable) {
+      return '$value != null ? $converter : null';
+    } else {
+      return converter;
+    }
+  }
+
+  String _buildJsonListToTypeConverter(String value, DartType type) {
+    final genericType = (type as ParameterizedType).typeArguments.first;
+
+    value = '($value as List)';
+
+    final converter =
+        '$value.map((e) => ${_buildJsonValueToTypeConverter('e', genericType)}).cast<${genericType.getDisplayString(withNullability: true)}>().toList()';
+
+    if (type.isNullable) {
+      return '$value != null ? $converter : null';
+    } else {
+      return converter;
+    }
+  }
+
+  String _buildFromFormSource(int index, ParameterElement element) {
+    return '';
   }
 
   String? _buildErrorHandler(ExecutableElement? errorHandler) {
