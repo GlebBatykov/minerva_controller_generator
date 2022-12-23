@@ -123,7 +123,7 @@ class ActionsSourceBuilder {
       }
     } else {
       final converter =
-          '${type.getDisplayString(withNullability: false)}.fromJson(jsonDecode($value!))';
+          '${type.getDisplayString(withNullability: false)}.fromJson($value!)';
 
       if (type.isNullable) {
         return '$value != null ? $converter : null';
@@ -228,7 +228,7 @@ class ActionsSourceBuilder {
       return _buildJsonMapToTypeConverter(value, type);
     } else {
       final converter =
-          '${type.getDisplayString(withNullability: false)}.fromJson(jsonDecode($value!))';
+          '${type.getDisplayString(withNullability: false)}.fromJson($value!)';
 
       if (type.isNullable) {
         return '$value != null ? $converter : null';
