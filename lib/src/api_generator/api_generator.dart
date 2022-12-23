@@ -17,7 +17,13 @@ class ApiFromControlllerGenerator extends Generator {
 
     final actions = _getActions(controller, shortName);
 
-    final data = ApiData(name: name, shortName: shortName, actions: actions);
+    final webSocketEndpoints = _getWebSocketEndpoints(controller, shortName);
+
+    final data = ApiData(
+        name: name,
+        shortName: shortName,
+        actions: actions,
+        webSocketEndpoints: webSocketEndpoints);
 
     return const ApiSourceBuilder().build(data);
   }
@@ -93,53 +99,6 @@ class ApiFromControlllerGenerator extends Generator {
     return true;
   }
 
-  String _getControllerPath(ClassElement controller, String shortName) {
-    final annotations =
-        controller.getMethadataOfExectlyType(controllerAnnotationChecker);
-
-    if (annotations.length > 2) {
-      throw InvalidGenerationSourceError('');
-    }
-
-    if (annotations.isNotEmpty) {
-      final annotation = annotations.first.computeConstantValue()!;
-
-      return _getControllerPathFromTemplate(shortName,
-          template: annotation.getField('path')!.toStringValue()!);
-    } else {
-      return _getControllerPathFromTemplate(shortName);
-    }
-  }
-
-  String _getControllerPathFromTemplate(String shortName,
-      {String template = '/{controller}'}) {
-    template = template.replaceAll('{controller}', shortName.toLowerCase());
-
-    return template;
-  }
-
-  String _getActionPath(ActionPathBuildData data) {
-    var actionName = data.actionName.toLowerCase();
-
-    if (ActionHttpMethod.values.map((e) => e.name).contains(actionName)) {
-      return data.controllerPath;
-    }
-
-    if (actionName.endsWith(data.method.name)) {
-      actionName =
-          actionName.substring(0, actionName.length - data.method.name.length);
-    }
-
-    if (data.template == '/{action}' &&
-        actionName == data.controllerShortName.toLowerCase()) {
-      return data.controllerPath;
-    }
-
-    final actionPath = data.template.replaceAll('{action}', actionName);
-
-    return '${data.controllerPath}$actionPath';
-  }
-
   ActionAnnotationData _getActionAnnotationData(MethodElement element) {
     ActionHttpMethod? method;
 
@@ -168,7 +127,9 @@ class ApiFromControlllerGenerator extends Generator {
 
     final filter = actionAnnotation.getField('filter')!;
 
-    final template = actionAnnotation.getField('path')!.toStringValue()!;
+    var template = actionAnnotation.getField('path')!.toStringValue()!;
+
+    template = _handleTemplate(template);
 
     return ActionAnnotationData(
         method: method!,
@@ -176,5 +137,147 @@ class ApiFromControlllerGenerator extends Generator {
         errorHandler: errorHandler?.toFunctionValue(),
         authOptions: authOptions,
         filter: filter);
+  }
+
+  String _getActionPath(ActionPathBuildData data) {
+    var actionName = data.actionName.toLowerCase();
+
+    if (ActionHttpMethod.values.map((e) => e.name).contains(actionName)) {
+      return data.controllerPath;
+    }
+
+    if (actionName.endsWith(data.method.name)) {
+      actionName =
+          actionName.substring(0, actionName.length - data.method.name.length);
+    }
+
+    if (data.template == '/{action}' &&
+        actionName == data.controllerShortName.toLowerCase()) {
+      return data.controllerPath;
+    }
+
+    final actionPath = data.template.replaceAll('{action}', actionName);
+
+    return '${data.controllerPath}$actionPath';
+  }
+
+  List<WebSocketEndpointData> _getWebSocketEndpoints(
+      ClassElement controller, String shortName) {
+    final endpointsElements = controller.methods
+        .where((element) => _isWebSocketEndpointElement(element));
+
+    final endpointsData = <WebSocketEndpointData>[];
+
+    for (final element in endpointsElements) {
+      final methodName = element.displayName;
+
+      final controllerPath = _getControllerPath(controller, shortName);
+
+      final template = _getWebSocketEndpointTemplate(element);
+
+      final webSocketEndpointPath = _getWebSocketEndpointPath(
+          WebSocketEndpointPathBuildData(
+              template: template,
+              webSocketEndpointName: methodName,
+              controllerPath: controllerPath,
+              controllerShortName: shortName));
+
+      endpointsData.add(WebSocketEndpointData(
+          methodName, webSocketEndpointPath, element.parameters));
+    }
+
+    return endpointsData;
+  }
+
+  bool _isWebSocketEndpointElement(MethodElement element) {
+    final annotations =
+        element.getMethadataOfExectlyType(webSocketEndpointChecker);
+
+    if (annotations.isEmpty) {
+      return false;
+    }
+
+    if (annotations.length > 1) {
+      throw InvalidGenerationSourceError('');
+    }
+
+    if (element.isPrivate) {
+      throw InvalidGenerationSourceError('');
+    }
+
+    if (element.parameters
+        .where((element) => webSocketChecker.isExactlyType(element.type))
+        .isEmpty) {
+      throw InvalidGenerationSourceError('');
+    }
+
+    return true;
+  }
+
+  String _getWebSocketEndpointTemplate(MethodElement element) {
+    final annotation =
+        webSocketEndpointChecker.firstAnnotationOfExact(element)!;
+
+    var template = annotation.getField('path')!.toStringValue()!;
+
+    template = _handleTemplate(template);
+
+    return template;
+  }
+
+  String _getWebSocketEndpointPath(WebSocketEndpointPathBuildData data) {
+    var endpointName = data.webSocketEndpointName.toLowerCase();
+
+    if (endpointName.endsWith('endpoint')) {
+      endpointName = endpointName.substring(0, endpointName.length - 8);
+    }
+
+    if (data.template == '/{endpoint}' &&
+        endpointName == data.controllerShortName.toLowerCase()) {
+      return data.controllerPath;
+    }
+
+    final endpointPath = data.template.replaceAll('{endpoint}', endpointName);
+
+    return '${data.controllerPath}$endpointPath';
+  }
+
+  String _getControllerPath(ClassElement controller, String shortName) {
+    final annotations =
+        controller.getMethadataOfExectlyType(controllerAnnotationChecker);
+
+    if (annotations.length > 2) {
+      throw InvalidGenerationSourceError('');
+    }
+
+    if (annotations.isNotEmpty) {
+      final annotation = annotations.first.computeConstantValue()!;
+
+      return _getControllerPathFromTemplate(shortName,
+          template: annotation.getField('path')!.toStringValue()!);
+    } else {
+      return _getControllerPathFromTemplate(shortName);
+    }
+  }
+
+  String _getControllerPathFromTemplate(String shortName,
+      {String template = '/{controller}'}) {
+    template = _handleTemplate(template);
+
+    template = template.replaceAll('{controller}', shortName.toLowerCase());
+
+    return template;
+  }
+
+  String _handleTemplate(String template) {
+    if (!template.startsWith('/')) {
+      template = '/$template';
+    }
+
+    while (template.endsWith('/')) {
+      template = template.substring(0, template.length - 1);
+    }
+
+    return template;
   }
 }

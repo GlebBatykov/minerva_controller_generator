@@ -7,5 +7,11 @@ class ApiData {
 
   final List<ActionData> actions;
 
-  ApiData({required this.name, required this.shortName, required this.actions});
+  final List<WebSocketEndpointData> webSocketEndpoints;
+
+  ApiData(
+      {required this.name,
+      required this.shortName,
+      required this.actions,
+      required this.webSocketEndpoints});
 }

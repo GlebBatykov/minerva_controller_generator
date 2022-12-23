@@ -40,3 +40,7 @@ const fromFormChecker = TypeChecker.fromRuntime(FromForm);
 const fromRouteChecker = TypeChecker.fromRuntime(FromRoute);
 
 const fromQueryChecker = TypeChecker.fromRuntime(FromQuery);
+
+const webSocketEndpointChecker = TypeChecker.fromRuntime(WebSocketEndpoint);
+
+const webSocketChecker = TypeChecker.fromRuntime(WebSocket);
