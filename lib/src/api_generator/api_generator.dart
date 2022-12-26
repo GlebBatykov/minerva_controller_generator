@@ -140,9 +140,12 @@ class ApiFromControlllerGenerator extends Generator {
   }
 
   String _getActionPath(ActionPathBuildData data) {
+    const defaultTemplate = '/{action}';
+
     var actionName = data.actionName.toLowerCase();
 
-    if (ActionHttpMethod.values.map((e) => e.name).contains(actionName)) {
+    if (ActionHttpMethod.values.map((e) => e.name).contains(actionName) &&
+        (data.template == defaultTemplate || data.template == '/$actionName')) {
       return data.controllerPath;
     }
 
@@ -151,7 +154,7 @@ class ApiFromControlllerGenerator extends Generator {
           actionName.substring(0, actionName.length - data.method.name.length);
     }
 
-    if (data.template == '/{action}' &&
+    if (data.template == defaultTemplate &&
         actionName == data.controllerShortName.toLowerCase()) {
       return data.controllerPath;
     }
@@ -226,13 +229,15 @@ class ApiFromControlllerGenerator extends Generator {
   }
 
   String _getWebSocketEndpointPath(WebSocketEndpointPathBuildData data) {
+    const defaultTemplate = '/{endpoint}';
+
     var endpointName = data.webSocketEndpointName.toLowerCase();
 
     if (endpointName.endsWith('endpoint')) {
       endpointName = endpointName.substring(0, endpointName.length - 8);
     }
 
-    if (data.template == '/{endpoint}' &&
+    if (data.template == defaultTemplate &&
         endpointName == data.controllerShortName.toLowerCase()) {
       return data.controllerPath;
     }
