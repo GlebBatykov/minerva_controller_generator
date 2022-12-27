@@ -44,3 +44,9 @@ const fromQueryChecker = TypeChecker.fromRuntime(FromQuery);
 const webSocketEndpointChecker = TypeChecker.fromRuntime(WebSocketEndpoint);
 
 const webSocketChecker = TypeChecker.fromRuntime(WebSocket);
+
+const authContextChecker = TypeChecker.fromRuntime(AuthContext);
+
+const jwtAuthContextChecker = TypeChecker.fromRuntime(JwtAuthContext);
+
+const cookieAuthContextChecker = TypeChecker.fromRuntime(CookieAuthContext);
