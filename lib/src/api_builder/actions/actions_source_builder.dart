@@ -32,6 +32,18 @@ class ActionsSourceBuilder {
         parameters.add('context');
       } else if (requestChecker.isExactlyType(elements[i].type)) {
         parameters.add('request');
+      } else if (authContextChecker.isExactlyType(elements[i].type)) {
+        bindingSources.add(_buildAuthContextParameter(i, elements[i]));
+
+        parameters.add('parameter$i');
+      } else if (jwtAuthContextChecker.isExactlyType(elements[i].type)) {
+        bindingSources.add(_buildJwtAuthContextParameter(i, elements[i]));
+
+        parameters.add('parameter$i');
+      } else if (cookieAuthContextChecker.isExactlyType(elements[i].type)) {
+        bindingSources.add(_buildCookieAuthContextParameter(i, elements[i]));
+
+        parameters.add('parameter$i');
       } else {
         if (fromQueryChecker.hasAnnotationOfExact(elements[i])) {
           bindingSources.add(_buildFromQuerySource(i, elements[i]));
@@ -74,6 +86,30 @@ class ActionsSourceBuilder {
     parametersString += ')';
 
     return parametersString;
+  }
+
+  String _buildAuthContextParameter(int index, ParameterElement element) {
+    return 'final parameter$index = request.authContext';
+  }
+
+  String _buildJwtAuthContextParameter(int index, ParameterElement element) {
+    final source = 'final parameter$index = request.authContext.jwt';
+
+    if (element.type.isNullable) {
+      return source;
+    } else {
+      return '$source!';
+    }
+  }
+
+  String _buildCookieAuthContextParameter(int index, ParameterElement element) {
+    final source = 'final parameter$index = request.authContext.cookie';
+
+    if (element.type.isNullable) {
+      return source;
+    } else {
+      return '$source!';
+    }
   }
 
   String _buildFromQuerySource(int index, ParameterElement element) {
