@@ -158,14 +158,7 @@ class ActionsSourceBuilder {
         return converter;
       }
     } else {
-      final converter =
-          '${type.getDisplayString(withNullability: false)}.fromJson($value!)';
-
-      if (type.isNullable) {
-        return '$value != null ? $converter : null';
-      } else {
-        return converter;
-      }
+      throw InvalidGenerationSourceError('');
     }
   }
 
