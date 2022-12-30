@@ -1,14 +1,13 @@
 name: minerva_controller_generator
 description: Minerva code generator for work with controllers. Controllers are needed to configure the server.
-version: 0.9.2
+version: 0.9.3
 homepage: https://github.com/GlebBatykov/minerva_controller_generator
 
 environment:
   sdk: ">=2.18.2 <3.0.0"
 
 dependencies:
-  minerva_controller: ^1.0.0
-  minerva_controller_annotation: ^1.0.1
+  minerva_controller_annotation: ^1.0.2
   source_gen: ^1.2.6
   build: ^2.3.1
   analyzer: ^5.3.1
