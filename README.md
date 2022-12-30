@@ -10,6 +10,7 @@
 </div>
 
 - [About package](#about-package)
+- [Using](#using)
 - [What is controller](#what-is-controller)
 - [Actions](#actions)
 - [Forming the endpoint path](#forming-the-endpoint-path)
@@ -30,6 +31,65 @@ But all these methods forced me to write a lot of extra code. A more elegant way
 Some other frameworks have implemented something similar using the library for reflection - dart:mirrors. However, such an option would not allow using AOT compilation.
 
 This package implements controllers built on code generation. With it, you can configure your server using controllers, controller actions, data binding in controller action parameters, etc., and then the package generates an `Api` that builds endpoint routes, generates a code binding these action parameters to data from the request. You connect the generated `Api` in a class derived from the `MinervaEndpointsBuilder` class.
+
+# Using
+
+Creating the file `hello_controller.dart` with the controller `HelloController` and with one GET action `get`, which returns `Hello, world!`:
+
+```dart
+import 'package:minerva/minerva.dart';
+import 'package:minerva_controller_annotation/minerva_controller_annotation.dart';
+
+part 'hello_controller.g.dart';
+
+class HelloController extends ControllerBase {
+  @Get()
+  String get() {
+    return 'Hello, world!';
+  }
+}
+```
+
+Using this package we get the file `hello_controller.g.dart` with the following contents:
+
+```dart
+part of 'hello_controller.dart';
+
+class HelloApi extends Api {
+  final ControllerBase _controller = HelloController();
+
+  @override
+  Future<void> initialize(ServerContext context) async {
+    await _controller.initialize(context);
+  }
+
+  @override
+  void build(Endpoints endpoints) {
+    endpoints.get('/hello', (context, request) async {
+      return (_controller as HelloController).get();
+    }, errorHandler: null, authOptions: null, filter: null);
+  }
+
+  @override
+  Future<void> dispose(ServerContext context) async {
+    await _controller.dispose(context);
+  }
+}
+```
+
+Connecting the generated `Api`:
+
+```dart
+class ApisBuilder extends MinervaApisBuilder {
+  @override
+  List<Api> build() {
+    final apis = <Api>[];
+
+    apis.add(HelloApi());
+
+    return apis;
+  }
+```
 
 # What is controller
 

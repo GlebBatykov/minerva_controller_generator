@@ -10,6 +10,7 @@
 </div>
 
 - [О пакете](#о-пакете)
+- [Использование](#использование)
 - [Что такое контроллер](#что-такое-контроллер)
 - [Действия](#действия)
 - [Формирование пути конечной точки](#формирование-пути-конечной-точки)
@@ -30,6 +31,65 @@
 Некоторые другие фреймворки реализовывали нечто подобное при помощи библиотеки для рефлексии - dart:mirrors. Однако такой вариант не позволял бы использовать AOT компиляцию.
 
 Данный пакет реализует контроллеры построенные на генерации кода. При помощи него вы можете конфигурировать ваш сервер при помощи контроллеров, действий контроллеров, привязки данных в параметрах действий контроллеров и т.д., а затем пакет генерирует `Api`, которое строит маршруты конечных точек, генерирует код привязки данных параметров действий к данным из запроса. Вы подключаете сгенерированное `Api` в классе производном от класса `MinervaEndpointsBuilder`.
+
+# Использование
+
+Создаем файл `hello_controller.dart` с контроллером `HelloController` и с одним GET действием `get`, которое возвращает `Hello, world!`:
+
+```dart
+import 'package:minerva/minerva.dart';
+import 'package:minerva_controller_annotation/minerva_controller_annotation.dart';
+
+part 'hello_controller.g.dart';
+
+class HelloController extends ControllerBase {
+  @Get()
+  String get() {
+    return 'Hello, world!';
+  }
+}
+```
+
+Используя данный пакет мы получаем файл `hello_controller.g.dart` с следующим содержанием:
+
+```dart
+part of 'hello_controller.dart';
+
+class HelloApi extends Api {
+  final ControllerBase _controller = HelloController();
+
+  @override
+  Future<void> initialize(ServerContext context) async {
+    await _controller.initialize(context);
+  }
+
+  @override
+  void build(Endpoints endpoints) {
+    endpoints.get('/hello', (context, request) async {
+      return (_controller as HelloController).get();
+    }, errorHandler: null, authOptions: null, filter: null);
+  }
+
+  @override
+  Future<void> dispose(ServerContext context) async {
+    await _controller.dispose(context);
+  }
+}
+```
+
+Подключаем сгенерированное `Api`:
+
+```dart
+class ApisBuilder extends MinervaApisBuilder {
+  @override
+  List<Api> build() {
+    final apis = <Api>[];
+
+    apis.add(HelloApi());
+
+    return apis;
+  }
+```
 
 # Что такое контроллер
 
