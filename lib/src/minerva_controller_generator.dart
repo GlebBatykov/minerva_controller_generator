@@ -8,7 +8,6 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:minerva/minerva.dart';
-import 'package:minerva_controller/minerva_controller.dart';
 import 'package:minerva_controller_annotation/minerva_controller_annotation.dart';
 import 'package:source_gen/source_gen.dart';
 
